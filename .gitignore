@@ -1,0 +1,39 @@
+# Ignore target directory (build artifacts)
+target/
+
+# Ignore Cargo.lock for libraries, but not for binaries
+# Uncomment the next line if this is a library
+# Cargo.lock
+
+# Ignore build artifacts and temporary files
+*.o
+*.rlib
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Ignore debugger files
+*.pdb
+*.dbg
+*.sym
+
+# Ignore IDE and editor configurations
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+
+# Ignore QEMU-related files (if generated during development)
+qemu-system-*
+
+# Ignore JSON configuration files if auto-generated (like x86_64-charizard.json)
+*.json
+
+# Other unnecessary or temporary files
+.DS_Store
+Thumbs.db
