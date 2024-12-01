@@ -1,5 +1,5 @@
-# Charizard - Operating System written in Rust
 
+# Charizard - Operating System written in Rust
 ## Part 1. Create Bare Bones
 ### Step 1. Setting up
 #### Disable the Standard Library
