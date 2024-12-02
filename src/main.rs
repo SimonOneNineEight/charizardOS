@@ -13,7 +13,10 @@ pub extern "C" fn _start() -> ! {
 
     charizard::init();
 
-    x86_64::instructions::interrupts::int3();
+    //trigger a page fault
+    unsafe {
+        *(0xdeadbeef as *mut u8) = 42;
+    }
 
     #[cfg(test)]
     test_main();
@@ -33,5 +36,4 @@ fn panic(info: &PanicInfo) -> ! {
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     charizard::test_panic_handler(info);
-    loop {}
 }

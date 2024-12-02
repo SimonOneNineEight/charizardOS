@@ -3,12 +3,13 @@ name = "charizard"
 version = "0.1.0"
 edition = "2021"
 
+[[test]]
+name = "should_panic"
+harness = false
 
-# [profile.dev]
-# panic = "abort"
-#
-# [profile.release]
-# panic = "abort"
+[[test]]
+name = "stack_overflow"
+harness = false
 
 [dependencies]
 bootloader = "0.9" 

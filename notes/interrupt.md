@@ -110,7 +110,9 @@ For exception and interrupt handlers, however, pushing a return address would no
 In the `x86-64` crate, the interrupt stack frame is represented by the `InterruptStackFrame` struct. It is passed to interrupt handlers as `&mut` and can be used to retrieve additional infromation about the exception's cause. The struct contains no error code field, since only a few exceptions push an error code. These exceptions use the separate `HandlerFuncWithErrCode` function type, which has an addition `error_code` argument.
 
 #### Behind the Scenes
+
 The `x86-interrupt` calling convention is a powerful abstraction that hides almost all of the messy details of the exception handlers since we must not overwrite any register values before backing them up on stack. Here is a short overview of the things that the `x86-interrupt` calling convention takes care of:
+
 1. **Retrieving the arguments**: Most calling conventions expect that the arguments are passed in registers. This is not possible for exception handlers since we must not overwrite any register value before backing them up on the stack. Instead, the `x86-interrupt` calling convention is aware that the arguments already lie on the stack at a specific offset.
 
 2. **Returning using `iretq`**: Since the interrupt stack frame completely differs from stack frames of normal function calls, we can't return from handler functions through the normal `ret` instruction. So instead, the `iretq` instruction must be used.
@@ -119,4 +121,29 @@ The `x86-interrupt` calling convention is a powerful abstraction that hides almo
 
 4. **Aligning the stack**: Some instructions require a 16-byte stack alignment. The CPU ensures this alignment whenever an exception occurs, but for some exceptions it destroys it again later when it pushes an error code. The x86-interrupt` calling convention takes care of this by realigning the stack in this case.
 
+## Double Faults
 
+Double fault occurs when the CPU fails to invoke an exception handler. By handling this exception, we avoid fatal `triple faults` that cause a system reset. To prevent triple faults in all cases, we set up an `Interrupt Stack Table` to catch double faults on a separte kernel stack.
+
+### What is a Double Fault
+
+Double fault is a special exception that occurs when the CPU dails to invoke and exception handler. For example, it happens when a page fault is triggered but there is no page fault handler registered in the `IDT`. So it's kind of similar to catch-all blocks in programming langyages with exception.
+
+A double fault behaves like a normal exception. It has the vector number `8` and we can define a normal handler function for it in the IDT. It is really important to provide a double fault handler, because if a double fault is unhandled, a fatal `triple fault` occurs. This faults can't be caught, and most hardware reacts with a system reset.
+
+### Cause of Double Fault
+    A double fault is a special exception that occurs when the CPU fails to invoke and exception handler.
+We always says this is the definition of double fault, but what does `fail to invoke` means? and what happens if a handler causes exceptions itself?
+
+The AMD64 manual has an exact definition. Accroading to it, a **double fault exception can occur when a second exception occurs during the handling of a prior exception handler**. The `can` is important, it told us only very specific combinations of exceptions lead to a double fault. 
+
+For example, a divide-by-zero fault followed by a page fault is fine, but a divide-by-zero fault followed by a general-protection fault leads to a double fault.
+
+When the exception occurs, the CPU tries to read the corresponding IDT entry. Since the entry is 0, which is not a valid IDT entry, a `general protection fault` occurs. We did not define a handler function for the general protection fault either, so another general protection fault occurs. Accorading to the table, this leads to a double fault.
+
+#### Kernel Stack Overflow
+A guard page is a special memory page at the bottom of a stack that makes it possible to detect stack overflows. The page is not mapped to any physical frame, so accessing it causes a page fault instead of silently corrupting other memory. The bootloader sets up a guard page for out kernel stack, so a stack overflow causes a `page fault`.
+
+When a page fault occurs, the CPU looks up the page fault handler in the IDT and tries to push the `interrupt stack frame` onto the stack. However, the current stack pointer still pointes to the non-present guard page. Thus, a second page fault occurs, which causes a double fault. 
+
+So the CPU tries to call the double fault handler now
