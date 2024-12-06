@@ -7,13 +7,30 @@
 
 use core::panic::PanicInfo;
 
+#[cfg(test)]
+use bootloader::{entry_point, BootInfo};
+
 pub mod gdt;
 pub mod interrupts;
+pub mod memory;
 pub mod serial;
 pub mod vga_buffer;
 
+#[cfg(test)]
+entry_point!(test_kernel_main);
+
 pub fn init() {
+    gdt::init();
+    serial_println!("GDT initialized.");
+
     interrupts::init_idt();
+    serial_println!("IDT initialized.");
+
+    unsafe { interrupts::PICS.lock().initialize() };
+    serial_println!("PICs initialized.");
+
+    x86_64::instructions::interrupts::enable();
+    serial_println!("Interrupts enabled.");
 }
 
 pub trait Testable {
@@ -55,22 +72,28 @@ pub fn test_runner(tests: &[&dyn Testable]) {
     exit_qemu(QemuExitCode::Success);
 }
 
-pub fn test_panic_handler(info: &PanicInfo) -> ! {
-    serial_println!("[failed]\n");
-    serial_println!("Error: {}\n", info);
-    exit_qemu(QemuExitCode::Failed);
-
-    loop {}
+// Allow CPU to sleep while no interrupt
+pub fn hlt_loop() -> ! {
+    loop {
+        x86_64::instructions::hlt();
+    }
 }
 
 #[cfg(test)]
 #[no_mangle]
-pub extern "C" fn _start() -> ! {
+fn test_kernel_main(_boot_info: &'static BootInfo) -> ! {
     #[cfg(test)]
     init();
     test_main();
 
-    loop {}
+    hlt_loop();
+}
+
+pub fn test_panic_handler(info: &PanicInfo) -> ! {
+    serial_println!("[failed]\n");
+    serial_println!("Error: {}\n", info);
+    exit_qemu(QemuExitCode::Failed);
+    hlt_loop();
 }
 
 #[cfg(test)]
