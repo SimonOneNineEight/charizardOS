@@ -1,4 +1,3 @@
-use linked_list_allocator::LockedHeap;
 use spin::{Mutex, MutexGuard};
 use x86_64::{
     structures::paging::{
@@ -8,9 +7,9 @@ use x86_64::{
 };
 
 pub mod bump;
-use bump::BumpAllocator;
-
 pub mod fixed_size_block;
+use fixed_size_block::FixedSizeBlockAllocator;
+
 pub mod linked_list_allocator;
 
 pub const HEAP_START: usize = 0x4444_4444_0000;
@@ -47,7 +46,7 @@ fn align_up(addr: usize, align: usize) -> usize {
 }
 
 #[global_allocator]
-static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
+static ALLOCATOR: Locked<FixedSizeBlockAllocator> = Locked::new(FixedSizeBlockAllocator::new());
 
 pub fn init_heap(
     mapper: &mut impl Mapper<Size4KiB>,
