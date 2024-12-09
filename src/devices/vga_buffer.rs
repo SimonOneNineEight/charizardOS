@@ -3,6 +3,8 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
 
+use crate::{println, serial_println};
+
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -41,8 +43,8 @@ struct ScreenChar {
     color_code: ColorCode,
 }
 
-const BUFFER_HEIGHT: usize = 25;
-const BUFFER_WIDTH: usize = 80;
+pub const BUFFER_HEIGHT: usize = 25;
+pub const BUFFER_WIDTH: usize = 80;
 
 #[repr(transparent)]
 struct Buffer {
@@ -50,7 +52,7 @@ struct Buffer {
 }
 
 pub struct Writer {
-    column_position: usize,
+    pub column_position: usize,
     color_code: ColorCode,
     buffer: &'static mut Buffer,
 }
@@ -77,7 +79,7 @@ impl Writer {
         }
     }
 
-    fn new_line(&mut self) {
+    pub fn new_line(&mut self) {
         for row in 1..BUFFER_HEIGHT {
             for col in 0..BUFFER_WIDTH {
                 let character = self.buffer.chars[row][col].read();
@@ -88,7 +90,7 @@ impl Writer {
         self.column_position = 0;
     }
 
-    fn clear_row(&mut self, row: usize) {
+    pub fn clear_row(&mut self, row: usize) {
         let blank = ScreenChar {
             ascii_character: b' ',
             color_code: self.color_code,
@@ -96,6 +98,13 @@ impl Writer {
         for col in 0..BUFFER_WIDTH {
             self.buffer.chars[row][col].write(blank);
         }
+    }
+
+    pub fn clear(&mut self) {
+        for row in 0..BUFFER_HEIGHT {
+            self.clear_row(row);
+        }
+        self.column_position = 0;
     }
 
     pub fn write_string(&mut self, s: &str) {
@@ -106,12 +115,35 @@ impl Writer {
             }
         }
     }
+
+    pub fn write_char_at(&mut self, row: usize, col: usize, character: char) {
+        if row >= BUFFER_HEIGHT || col >= BUFFER_WIDTH {
+            panic!("Position out of bounds!");
+        }
+
+        self.buffer.chars[row][col].write(ScreenChar {
+            ascii_character: character as u8,
+            color_code: self.color_code,
+        });
+
+        self.column_position += 1;
+    }
 }
 
 impl fmt::Write for Writer {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         self.write_string(s);
         Ok(())
+    }
+}
+
+impl Default for Writer {
+    fn default() -> Self {
+        Self {
+            column_position: 0,
+            color_code: ColorCode::new(Color::Yellow, Color::Black),
+            buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
+        }
     }
 }
 
@@ -125,7 +157,7 @@ lazy_static! {
 
 #[macro_export]
 macro_rules! print {
-    ($($arg:tt)*) => ($crate::vga_buffer::_print(format_args!($($arg)*)));
+    ($($arg:tt)*) => ($crate::devices::vga_buffer::_print(format_args!($($arg)*)));
 }
 
 #[macro_export]

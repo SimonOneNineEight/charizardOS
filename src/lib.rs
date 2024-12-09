@@ -13,13 +13,11 @@ use bootloader::{entry_point, BootInfo};
 extern crate alloc;
 
 pub mod allocator;
-pub mod command;
+pub mod devices;
 pub mod gdt;
 pub mod interrupts;
-pub mod keyboard;
 pub mod memory;
 pub mod serial;
-pub mod vga_buffer;
 
 #[cfg(test)]
 entry_point!(test_kernel_main);

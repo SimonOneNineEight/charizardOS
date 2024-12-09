@@ -15,7 +15,11 @@ entry_point!(kernel_main);
 
 #[no_mangle]
 fn kernel_main(boot_info: &'static BootInfo) -> ! {
-    use charizard::{allocator, keyboard, memory};
+    use charizard::{
+        allocator,
+        devices::{console::CONSOLE, keyboard},
+        memory,
+    };
     use x86_64::{instructions, VirtAddr};
 
     println!("Welcome to Charizard!");
@@ -30,13 +34,20 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
 
     println!("Kernel initialized! Waiting for commands...");
 
-    serial_println!("hello serial print");
-
     #[cfg(test)]
     test_main();
 
+    // let mut console = CONSOLE.lock();
+    //
+    // console.print_char_and_move_cursor('h');
+    // console.print_char_and_move_cursor('e');
+    // console.print_char_and_move_cursor('l');
+    // console.print_char_and_move_cursor('l');
+    // console.print_char_and_move_cursor('o');
+
     loop {
         let command = keyboard::read_line();
+        println!("Command received: {}", command);
         instructions::hlt();
     }
 }

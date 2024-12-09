@@ -1,6 +1,5 @@
+use crate::devices::keyboard::{process_scancode, read_scancode};
 use crate::gdt;
-use crate::keyboard::{process_scancode, read_scancode};
-use crate::print;
 use crate::println;
 use lazy_static::lazy_static;
 use pic8259::ChainedPics;

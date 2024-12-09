@@ -1,4 +1,4 @@
-use crate::print;
+use crate::devices::console::CONSOLE;
 use crate::println;
 use alloc::{string::String, vec::Vec};
 use lazy_static::lazy_static;
@@ -32,12 +32,40 @@ pub fn process_scancode(scancode: u8) {
 
     if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
         if let Some(key) = keyboard.process_keyevent(key_event) {
+            let mut buffer = CHAR_BUFFER.lock();
+            let mut console = CONSOLE.lock();
+
+            let debug_string: String = buffer.iter().collect();
+            println!("CHAR_BUFFER: [{}]", debug_string);
             match key {
                 DecodedKey::Unicode(character) => {
-                    let mut buffer = CHAR_BUFFER.lock();
+                    if character == '\x08' {
+                        if !buffer.is_empty() {
+                            buffer.pop();
+                            console.backspace();
+                        }
+                        return;
+                    }
+
                     buffer.push(character);
+                    console.print_char_and_move_cursor(character);
                 }
-                DecodedKey::RawKey(key) => println!("Raw key: {:?}", key),
+                DecodedKey::RawKey(raw_key) => match raw_key {
+                    pc_keyboard::KeyCode::Backspace => {
+                        println!("Backspace pressed");
+                        if !buffer.is_empty() {
+                            buffer.pop();
+                            console.backspace();
+                        }
+                    }
+
+                    pc_keyboard::KeyCode::Return => {
+                        buffer.push('\n');
+                        console.print_char_and_move_cursor('\n');
+                    }
+
+                    _ => {}
+                },
             }
         } else {
             println!("failed to decode key event");
@@ -62,26 +90,21 @@ pub fn read_char() -> char {
 pub fn read_line() -> String {
     let mut buffer = String::new();
 
-    print!("\x1b[?25h");
-
     loop {
         if let Some(char) = read_char_nonblocking() {
+            println!("char: {}", char);
             match char {
                 '\n' => {
-                    // When enter back space, complete the input
                     break;
                 }
-                '\x08' => {
-                    // Handle Backspace
-                    if !buffer.is_empty() {
-                        buffer.pop();
-                        print!("\x08 \x08");
-                    }
+                '\x18' => {
+                    buffer.pop();
+                }
+                '\0' => {
+                    continue;
                 }
                 _ => {
-                    // Append valid characters to the buffer
                     buffer.push(char);
-                    print!("{}", char);
                 }
             }
         } else {
