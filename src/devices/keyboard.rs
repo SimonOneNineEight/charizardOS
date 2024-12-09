@@ -36,7 +36,6 @@ pub fn process_scancode(scancode: u8) {
             let mut console = CONSOLE.lock();
 
             let debug_string: String = buffer.iter().collect();
-            println!("CHAR_BUFFER: [{}]", debug_string);
             match key {
                 DecodedKey::Unicode(character) => {
                     if character == '\x08' {
@@ -50,22 +49,7 @@ pub fn process_scancode(scancode: u8) {
                     buffer.push(character);
                     console.print_char_and_move_cursor(character);
                 }
-                DecodedKey::RawKey(raw_key) => match raw_key {
-                    pc_keyboard::KeyCode::Backspace => {
-                        println!("Backspace pressed");
-                        if !buffer.is_empty() {
-                            buffer.pop();
-                            console.backspace();
-                        }
-                    }
-
-                    pc_keyboard::KeyCode::Return => {
-                        buffer.push('\n');
-                        console.print_char_and_move_cursor('\n');
-                    }
-
-                    _ => {}
-                },
+                DecodedKey::RawKey(..) => {}
             }
         } else {
             println!("failed to decode key event");
@@ -88,29 +72,24 @@ pub fn read_char() -> char {
 }
 
 pub fn read_line() -> String {
-    let mut buffer = String::new();
-
     loop {
-        if let Some(char) = read_char_nonblocking() {
-            println!("char: {}", char);
-            match char {
-                '\n' => {
-                    break;
-                }
-                '\x18' => {
-                    buffer.pop();
-                }
-                '\0' => {
-                    continue;
-                }
-                _ => {
-                    buffer.push(char);
-                }
-            }
-        } else {
-            hlt();
-        }
-    }
+        let newline_found = {
+            let buffer = CHAR_BUFFER.lock();
+            buffer.last() == Some(&'\n')
+        };
 
-    buffer
+        if newline_found {
+            let result: String = {
+                let mut buffer = CHAR_BUFFER.lock();
+                let collected = buffer.iter().collect();
+                buffer.clear();
+                collected
+            };
+
+            let trimmed_result = result.trim_end_matches('\n');
+            return String::from(trimmed_result);
+        }
+
+        hlt();
+    }
 }
