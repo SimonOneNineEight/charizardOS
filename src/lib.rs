@@ -19,6 +19,7 @@ pub mod gdt;
 pub mod interrupts;
 pub mod memory;
 pub mod serial;
+pub mod command;
 
 #[cfg(test)]
 entry_point!(test_kernel_main);

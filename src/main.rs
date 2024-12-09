@@ -17,8 +17,10 @@ entry_point!(kernel_main);
 fn kernel_main(boot_info: &'static BootInfo) -> ! {
     use charizard::{
         allocator,
-        devices::{console::CONSOLE, keyboard},
+        devices::keyboard,
         memory,
+        command,
+        file_system::FileSystem,
     };
     use x86_64::{instructions, VirtAddr};
 
@@ -32,22 +34,21 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
 
     allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap initialization failed");
 
+    let mut fs = FileSystem::new();
+
     println!("Kernel initialized! Waiting for commands...");
 
     #[cfg(test)]
     test_main();
 
-    // let mut console = CONSOLE.lock();
-    //
-    // console.print_char_and_move_cursor('h');
-    // console.print_char_and_move_cursor('e');
-    // console.print_char_and_move_cursor('l');
-    // console.print_char_and_move_cursor('l');
-    // console.print_char_and_move_cursor('o');
-
     loop {
         let command = keyboard::read_line();
         println!("Command received: {}", command);
+
+        match command::parse_and_execute_command(&command, &mut fs) {
+            Ok(response) => println!("{}", response),
+            Err(err) => println!("Error: {}", err),
+        }
         instructions::hlt();
     }
 }
