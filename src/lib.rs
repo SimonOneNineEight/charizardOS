@@ -14,6 +14,7 @@ extern crate alloc;
 
 pub mod allocator;
 pub mod devices;
+pub mod file_system;
 pub mod gdt;
 pub mod interrupts;
 pub mod memory;

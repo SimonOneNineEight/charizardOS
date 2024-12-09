@@ -35,7 +35,6 @@ pub fn process_scancode(scancode: u8) {
             let mut buffer = CHAR_BUFFER.lock();
             let mut console = CONSOLE.lock();
 
-            let debug_string: String = buffer.iter().collect();
             match key {
                 DecodedKey::Unicode(character) => {
                     if character == '\x08' {
