@@ -71,6 +71,12 @@ pub fn read_char() -> char {
 }
 
 pub fn read_line() -> String {
+    {
+        let mut console = CONSOLE.lock();
+        console.print_char_and_move_cursor('>');
+        console.print_char_and_move_cursor(' ');
+    }
+
     loop {
         let newline_found = {
             let buffer = CHAR_BUFFER.lock();

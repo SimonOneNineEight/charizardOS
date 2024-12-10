@@ -15,13 +15,7 @@ entry_point!(kernel_main);
 
 #[no_mangle]
 fn kernel_main(boot_info: &'static BootInfo) -> ! {
-    use charizard::{
-        allocator,
-        devices::keyboard,
-        memory,
-        command,
-        file_system::FileSystem,
-    };
+    use charizard::{allocator, command, devices::keyboard, file_system::FileSystem, memory};
     use x86_64::{instructions, VirtAddr};
 
     println!("Welcome to Charizard!");
@@ -43,7 +37,6 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
 
     loop {
         let command = keyboard::read_line();
-        println!("Command received: {}", command);
 
         match command::parse_and_execute_command(&command, &mut fs) {
             Ok(response) => println!("{}", response),

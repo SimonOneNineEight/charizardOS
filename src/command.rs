@@ -26,7 +26,8 @@ pub fn parse_and_execute_command(command: &str, fs: &mut FileSystem) -> Result<S
             if parts.len() < 2 {
                 return Err(String::from("Usage: touch <path>"));
             }
-            fs.create_file("/", parts[1], "")?;
+            let content: &str = if parts.len() > 2 { parts[2] } else {""};
+            fs.create_file("/", parts[1], content);
             Ok(format!("File '{}' created", parts[1]))
         }
         "ls" => {
@@ -35,6 +36,13 @@ pub fn parse_and_execute_command(command: &str, fs: &mut FileSystem) -> Result<S
             }
             let contents = fs.list_directory(parts[1])?;
             Ok(format!("Contents of '{}': {:?}", parts[1], contents))
+        }
+        "cat" => {
+            if parts.len() < 2 {
+                return Err(String::from("Usage: cat <path>"));
+            }
+            let content = fs.read_file("/", parts[1])?;
+            Ok(String::from(content))
         }
         "rm" => {
             if parts.len() < 2 {
