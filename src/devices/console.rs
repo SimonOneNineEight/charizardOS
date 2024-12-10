@@ -2,7 +2,6 @@ use crate::devices::{
     cursor::Cursor,
     vga_buffer::{Writer, BUFFER_HEIGHT, BUFFER_WIDTH},
 };
-use crate::println;
 use lazy_static::lazy_static;
 use spin::Mutex;
 

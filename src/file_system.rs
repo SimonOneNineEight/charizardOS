@@ -81,7 +81,7 @@ impl FileSystem {
                 .iter()
                 .find(|node| matches!(node, FSNode::File{ name: n, ..} if n == name))
             {
-                Ok(&content)
+                Ok(content)
             } else {
                 Err(format!("File '{}' not found in '{}'", name, path))
             }

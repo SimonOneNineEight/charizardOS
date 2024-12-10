@@ -7,7 +7,7 @@
 extern crate alloc;
 
 use bootloader::{entry_point, BootInfo};
-use charizard::{memory::BootInfoFrameAllocator, println, serial_println};
+use charizard::{memory::BootInfoFrameAllocator, println};
 use core::panic::PanicInfo;
 
 // Tells Rust what the entry function of the OS

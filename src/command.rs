@@ -1,10 +1,9 @@
-
 extern crate alloc;
 
+use crate::file_system::FileSystem;
 use alloc::format;
 use alloc::string::String;
 use alloc::vec::Vec;
-use crate::file_system::FileSystem;
 
 pub fn parse_and_execute_command(command: &str, fs: &mut FileSystem) -> Result<String, String> {
     let parts: Vec<&str> = command.split_whitespace().collect();
@@ -26,8 +25,8 @@ pub fn parse_and_execute_command(command: &str, fs: &mut FileSystem) -> Result<S
             if parts.len() < 2 {
                 return Err(String::from("Usage: touch <path>"));
             }
-            let content: &str = if parts.len() > 2 { parts[2] } else {""};
-            fs.create_file("/", parts[1], content);
+            let content: &str = if parts.len() > 2 { parts[2] } else { "" };
+            let _ = fs.create_file("/", parts[1], content);
             Ok(format!("File '{}' created", parts[1]))
         }
         "ls" => {

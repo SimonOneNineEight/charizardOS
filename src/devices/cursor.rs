@@ -1,4 +1,3 @@
-use crate::println;
 use x86_64::instructions::port::Port;
 
 use crate::devices::vga_buffer::{BUFFER_HEIGHT, BUFFER_WIDTH, WRITER};
