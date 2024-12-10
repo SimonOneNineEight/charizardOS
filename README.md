@@ -1,4 +1,4 @@
-# <img src="https://img.pokemondb.net/sprites/black-white/normal/charizard.png" alt="Charizard"> CharizardOS
+# <img src="https://img.pokemondb.net/sprites/black-white/normal/charizard.png" alt="Charizard" style="width: 50px"> CharizardOS - A minimal OS written in Rust
 
 A minimalist operating system built from scratch in Rust. This project demonstrates low-level system programming with a focus on keyboard handling, real-time display updates, and a simple file system.
 
